@@ -1,0 +1,31 @@
+{
+	email {$EMAIL_ADMIN}
+}
+
+{$DOMINIO} {
+	encode gzip zstd
+
+	@estaticos path /assets/*
+	header @estaticos Cache-Control "public, max-age=31536000, immutable"
+	@sinCache path / /index.html /sw.js /manifest.webmanifest
+	header @sinCache Cache-Control "no-cache"
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# /api/... va al servidor de la aplicación (quitando el prefijo /api)
+	handle_path /api/* {
+		reverse_proxy backend:3000
+	}
+
+	# Todo lo demás es el panel
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

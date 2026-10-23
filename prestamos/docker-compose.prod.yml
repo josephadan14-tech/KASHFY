@@ -1,0 +1,56 @@
+# Producción: base de datos + API + panel con HTTPS automático (Caddy).
+# Uso:  docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+name: prestamos-prod
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USUARIO}
+      POSTGRES_PASSWORD: ${DB_CLAVE}
+      POSTGRES_DB: ${DB_NOMBRE}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Solo se ejecutan la PRIMERA vez, cuando la base está vacía
+      - ./backend/src/db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Sin "ports": la base NO se expone a internet, solo la ve el API por la red interna.
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgres://${DB_USUARIO}:${DB_CLAVE}@db:5432/${DB_NOMBRE}
+      JWT_SECRET: ${JWT_SECRET}
+    # Sin "ports": solo el panel (Caddy) habla con el API.
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      DOMINIO: ${DOMINIO}
+      EMAIL_ADMIN: ${EMAIL_ADMIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

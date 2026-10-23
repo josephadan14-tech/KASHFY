@@ -1,0 +1,26 @@
+{
+  "name": "prestamos-backend",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=.env --import tsx --watch src/server.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "build": "tsc",
+    "set-password": "node --env-file=.env --import tsx src/scripts/set-password.ts",
+    "crear-empresa": "node --import tsx src/scripts/crear-empresa.ts"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
